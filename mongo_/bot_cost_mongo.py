@@ -15,36 +15,39 @@ class ExpenseMongoClient:
 
     def add_expense(self, user_id: int, amount: int, category: str, description: str):
         # write your code here
-        pass
+        expense = {'user_id': user_id, 'amount': amount, 'category': category, 'description': description}
+        return self.collection.insert_one(expense)
 
     def get_expenses(self, user_id: int) -> list:
-        # write your code here
-        pass
+        return list(self.collection.find({'user_id': user_id}, {'user_id': 0, '_id': 0}))
 
     def get_categories(self, user_id: int) -> list:
-        # write your code here
-        pass
+        objects = self.collection.find({'user_id': user_id}, {'user_id': 0, '_id': 0})
+        return [object["category"] for object in objects]
+
 
     def get_expenses_by_category(self, user_id: int, category: str) -> list:
-        # write your code here
-        pass
+        return list(self.collection.find({'user_id': user_id, 'category':category}, {'user_id': 0, '_id': 0}))
+
 
     def get_total_expense(self, user_id: int):
-        # write your code here
-        pass
+        total  = self.collection.aggregate([{"$match":{"user_id":user_id}},{"$project":{'_id':0}},{"$group": {"_id": "$user_id", "sum": {"$sum": "$amount"}}}])
+        return list(total)[0]["sum"]
 
     def get_total_expense_by_category(self, user_id: int):
-        # write your code here
-        pass
+        pipline =[{"$match":{"user_id":user_id}},{"$project":{'_id':0,'description': 0}},
+                  {"$group": {"_id": "$category", "sum": {"$sum": "$amount"}}}]
+        total  = self.collection.aggregate(pipline)
+        return [{i["_id"]:i["sum"]} for i in total]
 
 
 if __name__ == "__main__":
     expense_mongo_client = ExpenseMongoClient("localhost", 27017)
-    expense_mongo_client.add_expense(123, 100, "غذا", "ناهار")
-    expense_mongo_client.add_expense(123, 200, "غذا", "شام")
-    expense_mongo_client.add_expense(123, 300, "سفر", "پرواز")
-    expense_mongo_client.add_expense(321, 400, "غذا", "ناهار")
-    expense_mongo_client.add_expense(321, 500, "سفر", "پرواز")
+    # expense_mongo_client.add_expense(123, 100, "غذا", "ناهار")
+    # expense_mongo_client.add_expense(123, 200, "غذا", "شام")
+    # expense_mongo_client.add_expense(123, 300, "سفر", "پرواز")
+    # expense_mongo_client.add_expense(321, 400, "غذا", "ناهار")
+    # expense_mongo_client.add_expense(321, 500, "سفر", "پرواز")
 
     print("Expenses of 123")
     print(expense_mongo_client.get_expenses(123))
